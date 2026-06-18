@@ -28,7 +28,7 @@ router.get('/tags', auth.optional, async (req: Request, res: Response, next: Nex
  */
 router.get('/tags/:tag', auth.optional, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const tag = await getTagByName(req.params.tag);
+    const tag = await getTagByName(req.params.tag, req.auth?.user?.id);
     res.json({ tag });
   } catch (error) {
     next(error);

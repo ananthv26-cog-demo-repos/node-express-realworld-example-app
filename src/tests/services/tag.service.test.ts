@@ -46,30 +46,27 @@ describe('TagService', () => {
   describe('getTagByName', () => {
     test('should return the tag with articles count', async () => {
       // Given
-      const mockedResponse = {
-        name: 'reactjs',
-        _count: { articles: 3 },
-      };
+      const mockedTagResponse = { name: 'reactjs' };
 
       // When
-      // @ts-expect-error findUnique mock returns partial type
-      prismaMock.tag.findUnique.mockResolvedValue(mockedResponse);
+      // @ts-expect-error findFirst mock returns partial type
+      prismaMock.tag.findFirst.mockResolvedValue(mockedTagResponse);
+      // @ts-expect-error count mock has circular type refs
+      prismaMock.article.count.mockResolvedValue(3);
 
       // Then
       const result = await getTagByName('reactjs');
       expect(result).toEqual({ name: 'reactjs', articlesCount: 3 });
     });
 
-    test('should return zero articles count for a tag with no articles', async () => {
+    test('should return zero articles count for a tag with no visible articles', async () => {
       // Given
-      const mockedResponse = {
-        name: 'emptytag',
-        _count: { articles: 0 },
-      };
+      const mockedTagResponse = { name: 'emptytag' };
 
       // When
-      // @ts-expect-error findUnique mock returns partial type
-      prismaMock.tag.findUnique.mockResolvedValue(mockedResponse);
+      // @ts-expect-error findFirst mock returns partial type
+      prismaMock.tag.findFirst.mockResolvedValue(mockedTagResponse);
+      prismaMock.article.count.mockResolvedValue(0);
 
       // Then
       const result = await getTagByName('emptytag');
@@ -88,10 +85,24 @@ describe('TagService', () => {
 
     test('should throw an error when the tag is not found', async () => {
       // When
-      prismaMock.tag.findUnique.mockResolvedValue(null);
+      prismaMock.tag.findFirst.mockResolvedValue(null);
 
       // Then
       await expect(getTagByName('nonexistent')).rejects.toThrowError();
+    });
+
+    test('should accept an optional user id for visibility scoping', async () => {
+      // Given
+      const mockedTagResponse = { name: 'private-tag' };
+
+      // When
+      // @ts-expect-error findFirst mock returns partial type
+      prismaMock.tag.findFirst.mockResolvedValue(mockedTagResponse);
+      prismaMock.article.count.mockResolvedValue(5);
+
+      // Then
+      const result = await getTagByName('private-tag', 456);
+      expect(result).toEqual({ name: 'private-tag', articlesCount: 5 });
     });
   });
 });

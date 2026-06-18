@@ -2,7 +2,7 @@ import prisma from '../../../prisma/prisma-client';
 import HttpException from '../../models/http-exception.model';
 import { Tag } from './tag.model';
 
-export const getTags = async (id?: number): Promise<string[]> => {
+const buildAuthorVisibilityQueries = (id?: number) => {
   const queries = [];
   queries.push({ demo: true });
 
@@ -13,6 +13,12 @@ export const getTags = async (id?: number): Promise<string[]> => {
       },
     });
   }
+
+  return queries;
+};
+
+export const getTags = async (id?: number): Promise<string[]> => {
+  const queries = buildAuthorVisibilityQueries(id);
 
   const tags = await prisma.tag.findMany({
     where: {
@@ -40,6 +46,7 @@ export const getTags = async (id?: number): Promise<string[]> => {
 
 export const getTagByName = async (
   tagName: string,
+  id?: number,
 ): Promise<{ name: string; articlesCount: number }> => {
   const name = tagName?.trim();
 
@@ -47,23 +54,34 @@ export const getTagByName = async (
     throw new HttpException(422, { errors: { tag: ["can't be blank"] } });
   }
 
-  const tag = await prisma.tag.findUnique({
-    where: { name },
-    select: {
-      name: true,
-      _count: {
-        select: { articles: true },
+  const authorQueries = buildAuthorVisibilityQueries(id);
+
+  const tag = await prisma.tag.findFirst({
+    where: {
+      name,
+      articles: {
+        some: {
+          author: { OR: authorQueries },
+        },
       },
     },
+    select: { name: true },
   });
 
   if (!tag) {
     throw new HttpException(404, { errors: { tag: ['not found'] } });
   }
 
+  const articlesCount = await prisma.article.count({
+    where: {
+      tagList: { some: { name } },
+      author: { OR: authorQueries },
+    },
+  });
+
   return {
     name: tag.name,
-    articlesCount: tag._count.articles,
+    articlesCount,
   };
 };
 
