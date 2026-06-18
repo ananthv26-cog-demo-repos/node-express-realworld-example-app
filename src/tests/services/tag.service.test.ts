@@ -48,7 +48,7 @@ describe('TagService', () => {
       // Given
       const mockedResponse = {
         name: 'reactjs',
-        articles: [{ id: 1 }, { id: 2 }, { id: 3 }],
+        _count: { articles: 3 },
       };
 
       // When
@@ -64,7 +64,7 @@ describe('TagService', () => {
       // Given
       const mockedResponse = {
         name: 'emptytag',
-        articles: [],
+        _count: { articles: 0 },
       };
 
       // When

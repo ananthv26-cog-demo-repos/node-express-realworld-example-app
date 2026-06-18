@@ -51,8 +51,8 @@ export const getTagByName = async (
     where: { name },
     select: {
       name: true,
-      articles: {
-        select: { id: true },
+      _count: {
+        select: { articles: true },
       },
     },
   });
@@ -63,7 +63,7 @@ export const getTagByName = async (
 
   return {
     name: tag.name,
-    articlesCount: tag.articles.length,
+    articlesCount: tag._count.articles,
   };
 };
 
